@@ -1,0 +1,89 @@
+******************************
+Manual build + Deploy process 
+******************************
+# Open one foler in windows-> create maven project -> build the maven Goal (mvn clean package) -> upload the war file in tomcat web server
+*******************************
+Automate build + Deploy Process:
+*****************************
+1. Install jenkins (one server)
+2. Install tomcat (another server)
+3. Once Login Jenkins and check the jenkins consule
+4. we need to install git Client on the jenkins server
+5. Create a new pipeline job-
+6. stage-1 -> go to pipeline syntax -> snippet genertor we have give git url
+stage-1 (checkout git
+pipeline {
+    agent any
+ 
+    stages {
+        stage('git checkout') {
+            steps {
+                git 'https://github.com/arunkeerthi/newmavenproject.git'
+            }
+        }
+State-2
+ we need to install maven ( yum install maven -y )
+ $ mvn --version
+   stage('Build maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+stage-3
+ we need to plugin ssh-agent in jenkins
+
+  go to pipline syntax -> update the tomcat server (ip and Privat key)
+   -> ADD -> Click jenkins -> select ssh with private key -> id and description (give)->username(ec2-user)-> Add key attache the (pem.file)
+
+stage('deploy') {
+            steps {
+                sshagent(['tomcat']) {
+                  sh 'scp -o StrictHostKeyChecking=no target/01-maven-web-app.war ec2-user@44.211.129.181:/opt/apache-tomcat-10.1.11/webapps'
+}
+            }
+        }
+        
+        
+    }
+}
+
+
+then run the job we able to see the output in tomcat server......
+
++++++++++++++++
+Adding web hook:
+++++++++++++++++
+step-1 go to jenkins job -> generate -> select git web hook trigger
+step-2 go to git hub -> setting -> webhook -> update the jenkins url like below
+
+http://52.54.218.6:8080/github-webhook/
+
+
+-> Overall Pipeline for (maven + Tomcat Deploy)
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+pipeline {
+    agent any
+ 
+    stages {
+        stage('git checkout') {
+            steps {
+                git 'https://github.com/arunkeerthi/newmavenproject.git'
+            }
+        }
+         stage('Build maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+          stage('deploy') {
+            steps {
+                sshagent(['tomcat']) {
+                  sh 'scp -o StrictHostKeyChecking=no target/01-maven-web-app.war ec2-user@44.211.129.181:/opt/apache-tomcat-10.1.11/webapps'
+}
+            }
+        }
+        
+        
+    }
+}
